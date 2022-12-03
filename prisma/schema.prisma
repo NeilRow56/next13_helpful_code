@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+   id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now()) // @map(name: "created_at")
+  updatedAt     DateTime  @default(now()) // @map(name: "updated_at")
+
+ 
+  surveys          Survey[]
+  survey_responses SurveyResponse[]
+
+  @@map(name: "users")
+}
+
+
+
+model Survey {
+  id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  authorId    String
+  title       String
+  description String
+  startAt     DateTime @default(now()) // @map(name: "start_at")
+  endAt       DateTime @default(now()) // @map(name: "end_at")
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now()) // @map(name: "created_at")
+  updatedAt   DateTime @default(now()) // @map(name: "updated_at")
+
+  author           User             @relation(fields: [authorId], references: [id])
+  survey_questions SurveyQuestion[]
+  survey_responses SurveyResponse[]
+
+  @@index([authorId])
+  @@map(name: "surveys")
+}
+
+model SurveyQuestion {
+   id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  surveyId String
+  prompt   String
+  type     Int
+
+  survey           Survey           @relation(fields: [surveyId], references: [id])
+  survey_responses SurveyResponse[]
+
+  @@index([surveyId])
+  @@map(name: "survey_questions")
+}
+
+model SurveyResponse {
+   id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  questionId   String
+  surveyId     String
+  respondentId String
+  type         Int
+
+  respondent User           @relation(fields: [respondentId], references: [id])
+  survey     Survey         @relation(fields: [surveyId], references: [id])
+  question   SurveyQuestion @relation(fields: [questionId], references: [id])
+
+  @@index([surveyId])
+  @@index([questionId])
+  @@index([respondentId])
+  @@map(name: "survey_responses")
+}
+
+
